@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -44,6 +46,33 @@ func main() {
 
 	mux.HandleFunc("GET /api/weather", handlers.GetWeather)
 	mux.HandleFunc("GET /api/weather/{location}", handlers.GetWeatherByLocation)
+
+	staticDir := "public"
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
+		requested := path.Clean(r.URL.Path)
+		if requested == "/" {
+			requested = "/index.html"
+		}
+		filePath := path.Join(staticDir, requested)
+		if _, err := os.Stat(filePath); err == nil {
+			http.ServeFile(w, r, filePath)
+			return
+		}
+		indexPath := path.Join(staticDir, "index.html")
+		if _, err := os.Stat(indexPath); err == nil {
+			http.ServeFile(w, r, indexPath)
+			return
+		}
+		http.NotFound(w, r)
+	}))
 
 	handler := middleware.Recovery(middleware.Logging(middleware.CORS(mux)))
 
