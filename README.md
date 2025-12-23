@@ -1,6 +1,6 @@
-# meeting-planner
+# hangout-planner
 
-A simple and open source meeting planner.
+A simple and open source hangout planner.
 
 **Development**
 
@@ -54,5 +54,5 @@ The Go server serves files from [backend/public](backend/public). SPA routes fal
 
 ## Notes
 
-- The Vite dev server is configured to proxy API calls to the Go server, avoiding CORS during local development. See [meeting/vite.config.ts](meeting/vite.config.ts).
+- The Vite dev server is configured to proxy API calls to the Go server, avoiding CORS during local development. See vite.config.ts.
 - To change the backend port, set `PORT` before starting the Go server. Update the Vite proxy if you change host/port.
