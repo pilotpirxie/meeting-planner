@@ -11,9 +11,15 @@ export const TimeSlotList = ({ timeSlots, onDelete, onEdit }: TimeSlotListProps)
     return null;
   }
 
+  const sortedSlots = [...timeSlots].sort((a, b) => {
+    const dateTimeA = `${a.date}T${a.startTime}`;
+    const dateTimeB = `${b.date}T${b.startTime}`;
+    return dateTimeA.localeCompare(dateTimeB);
+  });
+
   return (
     <div className="mt-2">
-      {timeSlots.map((slot) => (
+      {sortedSlots.map((slot) => (
         <div
           key={slot.id}
           className="card card-body mt-2">

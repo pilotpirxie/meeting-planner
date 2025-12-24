@@ -51,7 +51,11 @@ export const Home = () => {
     handleOpenEditModal(slot);
   };
 
-  return <div className="bg-success vh-100">
+  const handleClearAllTimeSlots = () => {
+    setTimeSlots([]);
+  };
+
+  return <div className="bg-success vh-100 overflow-auto">
     <div className="container">
       <div className="row">
         <div className="col-md-6 offset-md-3 mt-5">
@@ -66,30 +70,6 @@ export const Home = () => {
                 className="form-control"
                 placeholder="Title of the hangout or activity"
               />
-            </div>
-
-            <div className="mt-3">
-              <h4>Time slots</h4>
-              <div className="card card-body">
-                <div className="d-flex gap-2">
-                  <button
-                    onClick={handleOpenModal}
-                    className="btn btn-info">
-                    <i className="ri-add-line" /> Add time slot
-                  </button>
-                  <button
-                    onClick={handleOpenQuickModal}
-                    className="btn btn-success">
-                    <i className="ri-flashlight-line" /> Create quick slots
-                  </button>
-                </div>
-
-                <TimeSlotList
-                  timeSlots={timeSlots}
-                  onDelete={handleDeleteTimeSlot}
-                  onEdit={handleEditTimeSlot}
-                />
-              </div>
             </div>
 
             <Modal
@@ -129,6 +109,7 @@ export const Home = () => {
                 dailyEndTime={quickData.dailyEndTime}
                 duration={quickData.duration}
                 isOverlapping={quickData.isOverlapping}
+                isWholeDay={quickData.isWholeDay}
                 onStartDateChange={(startDate) => {
                   setQuickData(prev => ({ ...prev, startDate }));
                 }}
@@ -147,6 +128,9 @@ export const Home = () => {
                 onOverlappingChange={(isOverlapping) => {
                   setQuickData(prev => ({ ...prev, isOverlapping }));
                 }}
+                onWholeDayChange={(isWholeDay) => {
+                  setQuickData(prev => ({ ...prev, isWholeDay }));
+                }}
               />
             </Modal>
 
@@ -159,6 +143,39 @@ export const Home = () => {
             <div className="mt-3">
               <Collapse title="Advanced options">
                 <div className="mt-2">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <h4>Time slots</h4>
+                    <div className="d-flex gap-2">
+                      <button
+                        onClick={handleOpenModal}
+                        className="btn btn-sm btn-info">
+                        <i className="ri-add-line" /> Add
+                      </button>
+                      <button
+                        onClick={handleOpenQuickModal}
+                        className="btn btn-sm btn-success">
+                        <i className="ri-flashlight-line" /> Quick slots
+                      </button>
+                      <button
+                        onClick={handleClearAllTimeSlots}
+                        className="btn btn-sm btn-danger">
+                        <i className="ri-delete-bin-line" /> Clear all
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    {timeSlots.length === 0 ? <div className="alert alert-warning">
+                      By default if no time slots are defined, participants can choose any time for the whole upcoming week with one hour interval.
+                    </div> : null}
+                    <TimeSlotList
+                      timeSlots={timeSlots}
+                      onDelete={handleDeleteTimeSlot}
+                      onEdit={handleEditTimeSlot}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3">
                   <label htmlFor="password">Password required to join</label>
                   <input
                     id="password"

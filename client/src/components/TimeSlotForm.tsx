@@ -46,7 +46,6 @@ export const useTimeSlotModal = () => {
     onUpdate: (id: string, slot: TimeSlot) => void
   ) => {
     if (editingId) {
-      // Editing existing slot
       const updatedSlot: TimeSlot = {
         id: editingId,
         date: modalData.date,
@@ -55,7 +54,6 @@ export const useTimeSlotModal = () => {
       };
       onUpdate(editingId, updatedSlot);
     } else {
-      // Adding new slot
       const newSlot: TimeSlot = {
         id: crypto.randomUUID(),
         date: modalData.date,

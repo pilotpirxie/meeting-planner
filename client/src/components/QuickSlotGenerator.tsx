@@ -8,12 +8,14 @@ interface QuickSlotGeneratorProps {
   dailyEndTime: string;
   duration: string;
   isOverlapping: boolean;
+  isWholeDay: boolean;
   onStartDateChange: (date: string) => void;
   onEndDateChange: (date: string) => void;
   onDailyStartTimeChange: (time: string) => void;
   onDailyEndTimeChange: (time: string) => void;
   onDurationChange: (duration: string) => void;
   onOverlappingChange: (isOverlapping: boolean) => void;
+  onWholeDayChange: (isWholeDay: boolean) => void;
 }
 
 export const useQuickSlotGenerator = () => {
@@ -25,6 +27,7 @@ export const useQuickSlotGenerator = () => {
     dailyEndTime: "",
     duration: "",
     isOverlapping: true,
+    isWholeDay: false,
   });
 
   const handleOpenQuickModal = () => {
@@ -35,6 +38,7 @@ export const useQuickSlotGenerator = () => {
       dailyEndTime: "",
       duration: "",
       isOverlapping: true,
+      isWholeDay: false,
     });
     setIsQuickModalOpen(true);
   };
@@ -48,6 +52,7 @@ export const useQuickSlotGenerator = () => {
       dailyEndTime: "",
       duration: "",
       isOverlapping: true,
+      isWholeDay: false,
     });
   };
 
@@ -55,8 +60,21 @@ export const useQuickSlotGenerator = () => {
     const generated: TimeSlot[] = [];
     const start = new Date(quickData.startDate);
     const end = new Date(quickData.endDate);
-    const durationHours = parseFloat(quickData.duration);
 
+    if (quickData.isWholeDay) {
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        const dateStr = date.toISOString().split("T")[0];
+        generated.push({
+          id: crypto.randomUUID(),
+          date: dateStr,
+          startTime: "00:00",
+          endTime: "23:59",
+        });
+      }
+      return generated;
+    }
+
+    const durationHours = parseFloat(quickData.duration);
     const intervalHours = quickData.isOverlapping ? durationHours / 2 : durationHours;
 
     const [dailyStartHour, dailyStartMin] = quickData.dailyStartTime.split(":").map(Number);
@@ -98,8 +116,9 @@ export const useQuickSlotGenerator = () => {
     handleCloseQuickModal();
   };
 
-  const isQuickFormValid =
-    quickData.startDate &&
+  const isQuickFormValid = quickData.isWholeDay
+    ? quickData.startDate && quickData.endDate
+    : quickData.startDate &&
     quickData.endDate &&
     quickData.dailyStartTime &&
     quickData.dailyEndTime &&
@@ -123,12 +142,14 @@ export const QuickSlotGenerator = ({
   dailyEndTime,
   duration,
   isOverlapping,
+  isWholeDay,
   onStartDateChange,
   onEndDateChange,
   onDailyStartTimeChange,
   onDailyEndTimeChange,
   onDurationChange,
   onOverlappingChange,
+  onWholeDayChange,
 }: QuickSlotGeneratorProps) => {
   return (
     <>
@@ -159,74 +180,110 @@ export const QuickSlotGenerator = ({
       </div>
 
       <div className="mt-3">
-        <label htmlFor="daily-start-time">Daily start time</label>
-        <input
-          id="daily-start-time"
-          type="time"
-          className="form-control"
-          value={dailyStartTime}
-          onChange={(e) => {
-            onDailyStartTimeChange(e.target.value);
-          }}
-        />
-      </div>
-
-      <div className="mt-3">
-        <label htmlFor="daily-end-time">Daily end time</label>
-        <input
-          id="daily-end-time"
-          type="time"
-          className="form-control"
-          value={dailyEndTime}
-          onChange={(e) => {
-            onDailyEndTimeChange(e.target.value);
-          }}
-        />
-      </div>
-
-      <div className="mt-3">
-        <label htmlFor="duration">Slot duration (hours)</label>
-        <select
-          id="duration"
-          className="form-control"
-          value={duration}
-          onChange={(e) => {
-            onDurationChange(e.target.value);
-          }}>
-          <option value="">Select duration</option>
-          <option value="0.5">30 minutes</option>
-          <option value="1">1 hour</option>
-          <option value="1.5">1.5 hours</option>
-          <option value="2">2 hours</option>
-          <option value="2.5">2.5 hours</option>
-          <option value="3">3 hours</option>
-          <option value="4">4 hours</option>
-        </select>
-      </div>
-
-      <div className="mt-3">
         <div className="form-check">
           <input
-            id="overlapping"
+            id="whole-day"
             type="checkbox"
             className="form-check-input"
-            checked={isOverlapping}
+            checked={isWholeDay}
             onChange={(e) => {
-              onOverlappingChange(e.target.checked);
+              const checked = e.target.checked;
+              onWholeDayChange(checked);
+              if (checked) {
+                onDailyStartTimeChange("00:00");
+                onDailyEndTimeChange("23:59");
+              } else {
+                onDailyStartTimeChange("");
+                onDailyEndTimeChange("");
+              }
             }}
           />
           <label
             className="form-check-label"
-            htmlFor="overlapping">
-            Allow overlapping time slots
+            htmlFor="whole-day">
+            Whole day
           </label>
         </div>
         <small className="text-muted">
-          {isOverlapping
-            ? "Slots will overlap (e.g., 16-18, 17-19, 18-20) for maximum flexibility"
-            : "Slots will be consecutive (e.g., 16-18, 18-20, 20-22) with no overlap"}
+          {isWholeDay
+            ? "Slots will cover the entire day (00:00 - 23:59)"
+            : "Specify custom time range for daily slots"}
         </small>
       </div>
+
+      {!isWholeDay ? <>
+        <div className="mt-3">
+          <label htmlFor="daily-start-time">Daily start time</label>
+          <input
+            id="daily-start-time"
+            type="time"
+            className="form-control"
+            value={dailyStartTime}
+            onChange={(e) => {
+              onDailyStartTimeChange(e.target.value);
+            }}
+          />
+        </div>
+
+        <div className="mt-3">
+          <label htmlFor="daily-end-time">Daily end time</label>
+          <input
+            id="daily-end-time"
+            type="time"
+            className="form-control"
+            value={dailyEndTime}
+            onChange={(e) => {
+              onDailyEndTimeChange(e.target.value);
+            }}
+          />
+        </div>
+      </> : null}
+
+      {!isWholeDay ? <>
+        <div className="mt-3">
+          <label htmlFor="duration">Slot duration (hours)</label>
+          <select
+            id="duration"
+            className="form-control"
+            value={duration}
+            onChange={(e) => {
+              onDurationChange(e.target.value);
+            }}>
+            <option value="">Select duration</option>
+            <option value="0.5">30 minutes</option>
+            <option value="1">1 hour</option>
+            <option value="1.5">1.5 hours</option>
+            <option value="2">2 hours</option>
+            <option value="2.5">2.5 hours</option>
+            <option value="3">3 hours</option>
+            <option value="4">4 hours</option>
+          </select>
+        </div>
+
+        <div className="mt-3">
+          <div className="form-check">
+            <input
+              id="overlapping"
+              type="checkbox"
+              className="form-check-input"
+              checked={isOverlapping}
+              onChange={(e) => {
+                onOverlappingChange(e.target.checked);
+              }}
+            />
+            <label
+              className="form-check-label"
+              htmlFor="overlapping">
+              Allow overlapping time slots
+            </label>
+          </div>
+          <small className="text-muted">
+            {isOverlapping
+              ? "Slots will overlap (e.g., 16-18, 17-19, 18-20) for maximum flexibility"
+              : "Slots will be consecutive (e.g., 16-18, 18-20, 20-22) with no overlap"}
+          </small>
+        </div>
+      </> : null}
 
       <div className="alert alert-info mt-3">
         <small>
