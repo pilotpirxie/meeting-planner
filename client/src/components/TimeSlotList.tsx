@@ -1,0 +1,41 @@
+import type { TimeSlot } from "../types";
+
+interface TimeSlotListProps {
+  timeSlots: TimeSlot[];
+  onDelete: (id: string) => void;
+  onEdit: (slot: TimeSlot) => void;
+}
+
+export const TimeSlotList = ({ timeSlots, onDelete, onEdit }: TimeSlotListProps) => {
+  if (timeSlots.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2">
+      {timeSlots.map((slot) => (
+        <div
+          key={slot.id}
+          className="card card-body mt-2">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              {slot.date} from {slot.startTime} to {slot.endTime}
+            </div>
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => { onEdit(slot); }}>
+                <i className="ri-edit-line" />
+              </button>
+              <button
+                className="btn btn-sm btn-danger"
+                onClick={() => { onDelete(slot.id); }}>
+                <i className="ri-delete-bin-6-line" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
