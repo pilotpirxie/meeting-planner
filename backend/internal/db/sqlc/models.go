@@ -9,17 +9,31 @@ import (
 )
 
 type Calendar struct {
-	ID          string
-	Title       string
-	Description pgtype.Text
-	Dates       []byte
-	CreatedAt   pgtype.Timestamptz
+	ID                   pgtype.UUID
+	Title                string
+	Description          pgtype.Text
+	Location             pgtype.Text
+	AcceptResponsesUntil pgtype.Timestamptz
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+}
+
+type CalendarTimeSlot struct {
+	ID         pgtype.UUID
+	CalendarID pgtype.UUID
+	SlotDate   pgtype.Date
+	StartTime  pgtype.Time
+	EndTime    pgtype.Time
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 }
 
 type Vote struct {
-	ID         string
-	CalendarID pgtype.Text
-	Username   string
-	Available  []byte
-	CreatedAt  pgtype.Timestamptz
+	ID                 pgtype.UUID
+	CalendarID         pgtype.UUID
+	CalendarTimeSlotID pgtype.UUID
+	Username           string
+	Available          []byte
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }

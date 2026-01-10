@@ -12,16 +12,27 @@ import (
 )
 
 const createCalendar = `-- name: CreateCalendar :one
-INSERT INTO calendars (id, title, description, dates)
-VALUES ($1, $2, $3, $4)
-RETURNING id, title, description, dates, created_at
+INSERT INTO calendars (
+  id,
+  title,
+  description,
+  location,
+  accept_responses_until,
+  created_at,
+  updated_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, title, description, location, accept_responses_until, created_at, updated_at
 `
 
 type CreateCalendarParams struct {
-	ID          string
-	Title       string
-	Description pgtype.Text
-	Dates       []byte
+	ID                   pgtype.UUID
+	Title                string
+	Description          pgtype.Text
+	Location             pgtype.Text
+	AcceptResponsesUntil pgtype.Timestamptz
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
 }
 
 func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (Calendar, error) {
@@ -29,72 +40,51 @@ func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) 
 		arg.ID,
 		arg.Title,
 		arg.Description,
-		arg.Dates,
+		arg.Location,
+		arg.AcceptResponsesUntil,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var i Calendar
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Dates,
+		&i.Location,
+		&i.AcceptResponsesUntil,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const deleteCalendarByID = `-- name: DeleteCalendarByID :exec
+DELETE FROM calendars
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCalendarByID(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteCalendarByID, id)
+	return err
+}
+
 const getCalendarByID = `-- name: GetCalendarByID :one
-SELECT id, title, description, dates, created_at
+SELECT id, title, description, location, accept_responses_until, created_at, updated_at
 FROM calendars
 WHERE id = $1
 `
 
-func (q *Queries) GetCalendarByID(ctx context.Context, id string) (Calendar, error) {
+func (q *Queries) GetCalendarByID(ctx context.Context, id pgtype.UUID) (Calendar, error) {
 	row := q.db.QueryRow(ctx, getCalendarByID, id)
 	var i Calendar
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Dates,
+		&i.Location,
+		&i.AcceptResponsesUntil,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const listCalendars = `-- name: ListCalendars :many
-SELECT id, title, description, dates, created_at
-FROM calendars
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type ListCalendarsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-func (q *Queries) ListCalendars(ctx context.Context, arg ListCalendarsParams) ([]Calendar, error) {
-	rows, err := q.db.Query(ctx, listCalendars, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Calendar
-	for rows.Next() {
-		var i Calendar
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.Description,
-			&i.Dates,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

@@ -19,7 +19,7 @@ export const useTimeSlotModal = () => {
   const handleOpenEditModal = (slot: TimeSlot) => {
     setEditingId(slot.id);
     setModalData({
-      date: slot.date,
+      date: slot.slotDate,
       startTime: slot.startTime,
       endTime: slot.endTime,
     });
@@ -39,7 +39,7 @@ export const useTimeSlotModal = () => {
     if (editingId) {
       const updatedSlot: TimeSlot = {
         id: editingId,
-        date: modalData.date,
+        slotDate: modalData.date,
         startTime: modalData.startTime,
         endTime: modalData.endTime,
       };
@@ -47,7 +47,7 @@ export const useTimeSlotModal = () => {
     } else {
       const newSlot: TimeSlot = {
         id: crypto.randomUUID(),
-        date: modalData.date,
+        slotDate: modalData.date,
         startTime: modalData.startTime,
         endTime: modalData.endTime,
       };

@@ -12,52 +12,86 @@ import (
 )
 
 const createVote = `-- name: CreateVote :one
-INSERT INTO votes (id, calendar_id, username, available)
-VALUES ($1, $2, $3, $4)
-RETURNING id, calendar_id, username, available, created_at
+INSERT INTO votes (
+  id,
+  calendar_id,
+  calendar_time_slot_id,
+  username,
+  available,
+  created_at,
+  updated_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, calendar_id, calendar_time_slot_id, username, available, created_at, updated_at
 `
 
 type CreateVoteParams struct {
-	ID         string
-	CalendarID pgtype.Text
-	Username   string
-	Available  []byte
+	ID                 pgtype.UUID
+	CalendarID         pgtype.UUID
+	CalendarTimeSlotID pgtype.UUID
+	Username           string
+	Available          []byte
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }
 
 func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) (Vote, error) {
 	row := q.db.QueryRow(ctx, createVote,
 		arg.ID,
 		arg.CalendarID,
+		arg.CalendarTimeSlotID,
 		arg.Username,
 		arg.Available,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var i Vote
 	err := row.Scan(
 		&i.ID,
 		&i.CalendarID,
+		&i.CalendarTimeSlotID,
 		&i.Username,
 		&i.Available,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const listVotesByCalendar = `-- name: ListVotesByCalendar :many
+const deleteVotesByID = `-- name: DeleteVotesByID :exec
+DELETE FROM votes
+WHERE id = $1
+`
+
+func (q *Queries) DeleteVotesByID(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteVotesByID, id)
+	return err
+}
+
+const listVotesByCalendarID = `-- name: ListVotesByCalendarID :many
 SELECT id, calendar_id, username, available, created_at
 FROM votes
 WHERE calendar_id = $1
 ORDER BY created_at ASC
 `
 
-func (q *Queries) ListVotesByCalendar(ctx context.Context, calendarID pgtype.Text) ([]Vote, error) {
-	rows, err := q.db.Query(ctx, listVotesByCalendar, calendarID)
+type ListVotesByCalendarIDRow struct {
+	ID         pgtype.UUID
+	CalendarID pgtype.UUID
+	Username   string
+	Available  []byte
+	CreatedAt  pgtype.Timestamptz
+}
+
+func (q *Queries) ListVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]ListVotesByCalendarIDRow, error) {
+	rows, err := q.db.Query(ctx, listVotesByCalendarID, calendarID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Vote
+	var items []ListVotesByCalendarIDRow
 	for rows.Next() {
-		var i Vote
+		var i ListVotesByCalendarIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CalendarID,

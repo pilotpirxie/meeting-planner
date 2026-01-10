@@ -32,7 +32,7 @@ export const generateTimeSlots = ({
       const dateStr = date.format("YYYY-MM-DD");
       generated.push({
         id: crypto.randomUUID(),
-        date: dateStr,
+        slotDate: dateStr,
         startTime: "00:00",
         endTime: "23:59",
       });
@@ -64,7 +64,7 @@ export const generateTimeSlots = ({
 
       generated.push({
         id: crypto.randomUUID(),
-        date: dateStr,
+        slotDate: dateStr,
         startTime,
         endTime,
       });

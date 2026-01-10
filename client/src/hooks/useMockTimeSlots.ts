@@ -9,9 +9,11 @@ export const useMockTimeSlots = () => {
       const endHour = startHour + 1;
       return {
         id: `slot-${(i + 1).toString()}`,
-        date: `2025-12-${day.toString().padStart(2, "0")}`,
+        slotDate: `2025-12-${day.toString().padStart(2, "0")}`,
         startTime: `${startHour.toString()}:00`,
         endTime: `${endHour.toString()}:00`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     })
   );

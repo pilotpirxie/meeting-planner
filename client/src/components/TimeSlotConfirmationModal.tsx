@@ -25,7 +25,7 @@ export const TimeSlotConfirmationModal = ({
       title="Are you sure?">
       <p>
         Are you sure you want to confirm the time slot on{" "}
-        <strong>{selectedTimeSlot?.date}</strong> from{" "}
+        <strong>{selectedTimeSlot?.slotDate}</strong> from{" "}
         <strong>{selectedTimeSlot?.startTime}</strong> to{" "}
         <strong>{selectedTimeSlot?.endTime}</strong>?
       </p>

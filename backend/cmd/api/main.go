@@ -39,13 +39,15 @@ func main() {
 	mux.HandleFunc("GET /api/calendars/{id}", handlers.GetCalendar)
 	mux.HandleFunc("POST /api/calendars/{id}/vote", handlers.VoteCalendar)
 
-	mux.HandleFunc("GET /api/polls", handlers.ListPolls)
-	mux.HandleFunc("POST /api/polls", handlers.CreatePoll)
-	mux.HandleFunc("GET /api/polls/{id}", handlers.GetPoll)
-	mux.HandleFunc("POST /api/polls/{id}/vote", handlers.VotePoll)
+	// TODO: Implement polls
+	// mux.HandleFunc("GET /api/polls", handlers.ListPolls)
+	// mux.HandleFunc("POST /api/polls", handlers.CreatePoll)
+	// mux.HandleFunc("GET /api/polls/{id}", handlers.GetPoll)
+	// mux.HandleFunc("POST /api/polls/{id}/vote", handlers.VotePoll)
 
-	mux.HandleFunc("GET /api/weather", handlers.GetWeather)
-	mux.HandleFunc("GET /api/weather/{location}", handlers.GetWeatherByLocation)
+	// TODO: Implement weather endpoints
+	// mux.HandleFunc("GET /api/weather", handlers.GetWeather)
+	// mux.HandleFunc("GET /api/weather/{location}", handlers.GetWeatherByLocation)
 
 	staticDir := "public"
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -1,3 +1,0 @@
-DROP TABLE IF EXISTS votes;
-DROP TABLE IF EXISTS calendars;
-

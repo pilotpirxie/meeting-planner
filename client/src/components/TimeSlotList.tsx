@@ -14,8 +14,8 @@ export const TimeSlotList = ({
   }
 
   const sortedSlots = [...timeSlots].sort((a, b) => {
-    const dateTimeA = `${a.date}T${a.startTime}`;
-    const dateTimeB = `${b.date}T${b.startTime}`;
+    const dateTimeA = `${a.slotDate}T${a.startTime}`;
+    const dateTimeB = `${b.slotDate}T${b.startTime}`;
     return dateTimeA.localeCompare(dateTimeB);
   });
 
@@ -27,7 +27,7 @@ export const TimeSlotList = ({
           className="card card-body mt-2">
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              {slot.date} from {slot.startTime} to {slot.endTime}
+              {slot.slotDate} from {slot.startTime} to {slot.endTime}
             </div>
             <div className="d-flex gap-2">
               <button

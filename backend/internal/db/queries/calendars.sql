@@ -1,16 +1,21 @@
 -- name: CreateCalendar :one
-INSERT INTO calendars (id, title, description, dates)
-VALUES ($1, $2, $3, $4)
-RETURNING id, title, description, dates, created_at;
+INSERT INTO calendars (
+  id,
+  title,
+  description,
+  location,
+  accept_responses_until,
+  created_at,
+  updated_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING *;
 
 -- name: GetCalendarByID :one
-SELECT id, title, description, dates, created_at
+SELECT id, title, description, location, accept_responses_until, created_at, updated_at
 FROM calendars
 WHERE id = $1;
 
--- name: ListCalendars :many
-SELECT id, title, description, dates, created_at
-FROM calendars
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2;
-
+-- name: DeleteCalendarByID :exec
+DELETE FROM calendars
+WHERE id = $1;

@@ -38,7 +38,7 @@ export const useMonthGridData = (
       const dateString = cellDate.format("YYYY-MM-DD");
       const isCurrentMonth = cellDate.month() === month;
 
-      const slotsForDate = timeSlots.filter(slot => slot.date === dateString);
+      const slotsForDate = timeSlots.filter(slot => slot.slotDate === dateString);
 
       cells.push({
         date: cellDate,
