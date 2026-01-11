@@ -26,13 +26,13 @@ RETURNING id, title, description, location, accept_responses_until, created_at, 
 `
 
 type CreateCalendarParams struct {
-	ID                   pgtype.UUID
-	Title                string
-	Description          pgtype.Text
-	Location             pgtype.Text
-	AcceptResponsesUntil pgtype.Timestamptz
-	CreatedAt            pgtype.Timestamptz
-	UpdatedAt            pgtype.Timestamptz
+	ID                   pgtype.UUID        `json:"id"`
+	Title                string             `json:"title"`
+	Description          pgtype.Text        `json:"description"`
+	Location             pgtype.Text        `json:"location"`
+	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (Calendar, error) {

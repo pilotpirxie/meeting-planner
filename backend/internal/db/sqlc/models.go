@@ -9,31 +9,30 @@ import (
 )
 
 type Calendar struct {
-	ID                   pgtype.UUID
-	Title                string
-	Description          pgtype.Text
-	Location             pgtype.Text
-	AcceptResponsesUntil pgtype.Timestamptz
-	CreatedAt            pgtype.Timestamptz
-	UpdatedAt            pgtype.Timestamptz
+	ID                   pgtype.UUID        `json:"id"`
+	Title                string             `json:"title"`
+	Description          pgtype.Text        `json:"description"`
+	Location             pgtype.Text        `json:"location"`
+	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
 }
 
 type CalendarTimeSlot struct {
-	ID         pgtype.UUID
-	CalendarID pgtype.UUID
-	SlotDate   pgtype.Date
-	StartTime  pgtype.Time
-	EndTime    pgtype.Time
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
+	ID         pgtype.UUID        `json:"id"`
+	CalendarID pgtype.UUID        `json:"calendar_id"`
+	SlotDate   pgtype.Date        `json:"slot_date"`
+	StartTime  pgtype.Time        `json:"start_time"`
+	EndTime    pgtype.Time        `json:"end_time"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Vote struct {
-	ID                 pgtype.UUID
-	CalendarID         pgtype.UUID
-	CalendarTimeSlotID pgtype.UUID
-	Username           string
-	Available          []byte
-	CreatedAt          pgtype.Timestamptz
-	UpdatedAt          pgtype.Timestamptz
+	ID                 pgtype.UUID        `json:"id"`
+	CalendarID         pgtype.UUID        `json:"calendar_id"`
+	CalendarTimeSlotID pgtype.UUID        `json:"calendar_time_slot_id"`
+	Username           string             `json:"username"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }

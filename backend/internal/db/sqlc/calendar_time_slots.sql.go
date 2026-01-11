@@ -15,28 +15,31 @@ const createCalendarTimeSlot = `-- name: CreateCalendarTimeSlot :one
 INSERT INTO calendar_time_slots (
   id,
   calendar_id,
+  slot_date,
   start_time,
   end_time,
   created_at,
   updated_at
 )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, calendar_id, slot_date, start_time, end_time, created_at, updated_at
 `
 
 type CreateCalendarTimeSlotParams struct {
-	ID         pgtype.UUID
-	CalendarID pgtype.UUID
-	StartTime  pgtype.Time
-	EndTime    pgtype.Time
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
+	ID         pgtype.UUID        `json:"id"`
+	CalendarID pgtype.UUID        `json:"calendar_id"`
+	SlotDate   pgtype.Date        `json:"slot_date"`
+	StartTime  pgtype.Time        `json:"start_time"`
+	EndTime    pgtype.Time        `json:"end_time"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateCalendarTimeSlot(ctx context.Context, arg CreateCalendarTimeSlotParams) (CalendarTimeSlot, error) {
 	row := q.db.QueryRow(ctx, createCalendarTimeSlot,
 		arg.ID,
 		arg.CalendarID,
+		arg.SlotDate,
 		arg.StartTime,
 		arg.EndTime,
 		arg.CreatedAt,
@@ -69,6 +72,7 @@ const getCalendarTimeSlotsByCalendarID = `-- name: GetCalendarTimeSlotsByCalenda
 SELECT 
   id,
   calendar_id,
+  slot_date,
   start_time,
   end_time,
   created_at,
@@ -78,27 +82,19 @@ WHERE calendar_id = $1
 ORDER BY slot_date, start_time
 `
 
-type GetCalendarTimeSlotsByCalendarIDRow struct {
-	ID         pgtype.UUID
-	CalendarID pgtype.UUID
-	StartTime  pgtype.Time
-	EndTime    pgtype.Time
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-}
-
-func (q *Queries) GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]GetCalendarTimeSlotsByCalendarIDRow, error) {
+func (q *Queries) GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]CalendarTimeSlot, error) {
 	rows, err := q.db.Query(ctx, getCalendarTimeSlotsByCalendarID, calendarID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetCalendarTimeSlotsByCalendarIDRow
+	var items []CalendarTimeSlot
 	for rows.Next() {
-		var i GetCalendarTimeSlotsByCalendarIDRow
+		var i CalendarTimeSlot
 		if err := rows.Scan(
 			&i.ID,
 			&i.CalendarID,
+			&i.SlotDate,
 			&i.StartTime,
 			&i.EndTime,
 			&i.CreatedAt,

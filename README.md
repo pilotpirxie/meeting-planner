@@ -23,7 +23,18 @@ yarn build:copy
 
 ## How to prepare migrations
 ```sh
+# to install goose
 # https://github.com/pressly/goose
 brew install goose
+
+# to create a new migration
+goose create MIGRATION_NAME sql
+
+# to apply migrations
 goose up
+```
+
+## How to generate query handlers
+```sh
+sqlc generate
 ```

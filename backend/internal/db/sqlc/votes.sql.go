@@ -17,22 +17,20 @@ INSERT INTO votes (
   calendar_id,
   calendar_time_slot_id,
   username,
-  available,
   created_at,
   updated_at
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, calendar_id, calendar_time_slot_id, username, available, created_at, updated_at
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, calendar_id, calendar_time_slot_id, username, created_at, updated_at
 `
 
 type CreateVoteParams struct {
-	ID                 pgtype.UUID
-	CalendarID         pgtype.UUID
-	CalendarTimeSlotID pgtype.UUID
-	Username           string
-	Available          []byte
-	CreatedAt          pgtype.Timestamptz
-	UpdatedAt          pgtype.Timestamptz
+	ID                 pgtype.UUID        `json:"id"`
+	CalendarID         pgtype.UUID        `json:"calendar_id"`
+	CalendarTimeSlotID pgtype.UUID        `json:"calendar_time_slot_id"`
+	Username           string             `json:"username"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) (Vote, error) {
@@ -41,7 +39,6 @@ func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) (Vote, e
 		arg.CalendarID,
 		arg.CalendarTimeSlotID,
 		arg.Username,
-		arg.Available,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -51,7 +48,6 @@ func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) (Vote, e
 		&i.CalendarID,
 		&i.CalendarTimeSlotID,
 		&i.Username,
-		&i.Available,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -69,18 +65,18 @@ func (q *Queries) DeleteVotesByID(ctx context.Context, id pgtype.UUID) error {
 }
 
 const listVotesByCalendarID = `-- name: ListVotesByCalendarID :many
-SELECT id, calendar_id, username, available, created_at
+SELECT id, calendar_id, calendar_time_slot_id, username, created_at
 FROM votes
 WHERE calendar_id = $1
 ORDER BY created_at ASC
 `
 
 type ListVotesByCalendarIDRow struct {
-	ID         pgtype.UUID
-	CalendarID pgtype.UUID
-	Username   string
-	Available  []byte
-	CreatedAt  pgtype.Timestamptz
+	ID                 pgtype.UUID        `json:"id"`
+	CalendarID         pgtype.UUID        `json:"calendar_id"`
+	CalendarTimeSlotID pgtype.UUID        `json:"calendar_time_slot_id"`
+	Username           string             `json:"username"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) ListVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]ListVotesByCalendarIDRow, error) {
@@ -95,8 +91,8 @@ func (q *Queries) ListVotesByCalendarID(ctx context.Context, calendarID pgtype.U
 		if err := rows.Scan(
 			&i.ID,
 			&i.CalendarID,
+			&i.CalendarTimeSlotID,
 			&i.Username,
-			&i.Available,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
