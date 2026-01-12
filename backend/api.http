@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### Test GET
+GET {{baseUrl}}/api/health 
+
+### Test POST
+POST {{baseUrl}}/api/echo/123?name=John&age=30
+Content-Type: {{contentType}}
+Authorization: Bearer sometoken
+
+{
+  "message": "Hello World!"
+}

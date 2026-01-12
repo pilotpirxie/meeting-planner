@@ -30,9 +30,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
-		handlers.RespondJSON(w, http.StatusOK, map[string]any{"status": "ok"})
-	})
+	mux.HandleFunc("GET /api/health", handlers.Healthcheck)
+	mux.HandleFunc("POST /api/echo/{id}", handlers.Echo)
 
 	mux.HandleFunc("GET /api/calendars", handlers.ListCalendars)
 	mux.HandleFunc("POST /api/calendars", handlers.CreateCalendar)
