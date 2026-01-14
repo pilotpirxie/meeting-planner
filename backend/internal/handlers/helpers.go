@@ -14,7 +14,7 @@ import (
 func RespondJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if encodingError := json.NewEncoder(w).Encode(data); encodingError != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
 }
@@ -23,28 +23,28 @@ func RespondError(w http.ResponseWriter, status int, message string) {
 	RespondJSON(w, status, map[string]any{"error": message})
 }
 
-func ParseJSON(r *http.Request, v any) error {
+func ParseJSON(r *http.Request, targetValue any) error {
 	if r.Body == nil {
 		return http.ErrMissingFile
 	}
 	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(v)
+	return json.NewDecoder(r.Body).Decode(targetValue)
 }
 
-func ToJSON(v any) string {
-	b, err := json.Marshal(v)
-	if err != nil {
+func ToJSON(value any) string {
+	jsonBytes, marshalError := json.Marshal(value)
+	if marshalError != nil {
 		return "{}"
 	}
-	return string(b)
+	return string(jsonBytes)
 }
 
-func ToJSONPretty(v any) string {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
+func ToJSONPretty(value any) string {
+	jsonBytes, marshalError := json.MarshalIndent(value, "", "  ")
+	if marshalError != nil {
 		return "{}"
 	}
-	return string(b)
+	return string(jsonBytes)
 }
 
 var validate = validator.New()
@@ -56,62 +56,62 @@ type RequestOptions struct {
 	Headers any
 }
 
-func ParseRequest(r *http.Request, opts RequestOptions) error {
-	if opts.Body != nil {
+func ParseRequest(r *http.Request, options RequestOptions) error {
+	if options.Body != nil {
 		if r.Body == nil {
 			return fmt.Errorf("Missing request body")
 		}
-		if err := json.NewDecoder(r.Body).Decode(opts.Body); err != nil {
-			return fmt.Errorf("Invalid JSON body: %w", err)
+		if decodingError := json.NewDecoder(r.Body).Decode(options.Body); decodingError != nil {
+			return fmt.Errorf("Invalid JSON body: %w", decodingError)
 		}
 		defer r.Body.Close()
-		if err := validate.Struct(opts.Body); err != nil {
-			return fmt.Errorf("Body validation failed: %w", err)
+		if validationError := validate.Struct(options.Body); validationError != nil {
+			return fmt.Errorf("Body validation failed: %w", validationError)
 		}
 	}
 
-	if opts.Params != nil {
-		if err := parsePathParams(r, opts.Params); err != nil {
-			return fmt.Errorf("Invalid path params: %w", err)
+	if options.Params != nil {
+		if parsingError := parsePathParams(r, options.Params); parsingError != nil {
+			return fmt.Errorf("Invalid path params: %w", parsingError)
 		}
-		if err := validate.Struct(opts.Params); err != nil {
-			return fmt.Errorf("Path params validation failed: %w", err)
-		}
-	}
-
-	if opts.Query != nil {
-		if err := parseQueryParams(r, opts.Query); err != nil {
-			return fmt.Errorf("Invalid query params: %w", err)
-		}
-		if err := validate.Struct(opts.Query); err != nil {
-			return fmt.Errorf("Query params validation failed: %w", err)
+		if validationError := validate.Struct(options.Params); validationError != nil {
+			return fmt.Errorf("Path params validation failed: %w", validationError)
 		}
 	}
 
-	if opts.Headers != nil {
-		if err := parseHeaders(r, opts.Headers); err != nil {
-			return fmt.Errorf("Invalid headers: %w", err)
+	if options.Query != nil {
+		if parsingError := parseQueryParams(r, options.Query); parsingError != nil {
+			return fmt.Errorf("Invalid query params: %w", parsingError)
 		}
-		if err := validate.Struct(opts.Headers); err != nil {
-			return fmt.Errorf("Headers validation failed: %w", err)
+		if validationError := validate.Struct(options.Query); validationError != nil {
+			return fmt.Errorf("Query params validation failed: %w", validationError)
+		}
+	}
+
+	if options.Headers != nil {
+		if parsingError := parseHeaders(r, options.Headers); parsingError != nil {
+			return fmt.Errorf("Invalid headers: %w", parsingError)
+		}
+		if validationError := validate.Struct(options.Headers); validationError != nil {
+			return fmt.Errorf("Headers validation failed: %w", validationError)
 		}
 	}
 
 	return nil
 }
 
-func parsePathParams(r *http.Request, v any) error {
-	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
+func parsePathParams(r *http.Request, targetStruct any) error {
+	reflectValue := reflect.ValueOf(targetStruct)
+	if reflectValue.Kind() != reflect.Ptr || reflectValue.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("ParamsScheme must be a pointer to struct")
 	}
 
-	rv = rv.Elem()
-	rt := rv.Type()
+	reflectValue = reflectValue.Elem()
+	reflectType := reflectValue.Type()
 
-	for i := 0; i < rv.NumField(); i++ {
-		field := rv.Field(i)
-		fieldType := rt.Field(i)
+	for fieldIndex := 0; fieldIndex < reflectValue.NumField(); fieldIndex++ {
+		field := reflectValue.Field(fieldIndex)
+		fieldType := reflectType.Field(fieldIndex)
 
 		tagName := fieldType.Tag.Get("param")
 		if tagName == "" {
@@ -123,58 +123,59 @@ func parsePathParams(r *http.Request, v any) error {
 			continue
 		}
 
-		if err := setFieldValue(field, paramValue); err != nil {
-			return fmt.Errorf("field %s: %w", fieldType.Name, err)
+		if settingError := setFieldValue(field, paramValue); settingError != nil {
+			return fmt.Errorf("field %s: %w", fieldType.Name, settingError)
 		}
 	}
 
 	return nil
 }
 
-func parseQueryParams(r *http.Request, v any) error {
-	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
+func parseQueryParams(r *http.Request, targetStruct any) error {
+	reflectValue := reflect.ValueOf(targetStruct)
+	if reflectValue.Kind() != reflect.Ptr || reflectValue.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("QueryScheme must be a pointer to struct")
 	}
 
-	rv = rv.Elem()
-	rt := rv.Type()
-	query := r.URL.Query()
+	reflectValue = reflectValue.Elem()
+	reflectType := reflectValue.Type()
+	queryParams := r.URL.Query()
 
-	for i := 0; i < rv.NumField(); i++ {
-		field := rv.Field(i)
-		fieldType := rt.Field(i)
+	for fieldIndex := 0; fieldIndex < reflectValue.NumField(); fieldIndex++ {
+		field := reflectValue.Field(fieldIndex)
+		fieldType := reflectType.Field(fieldIndex)
 
 		tagName := fieldType.Tag.Get("query")
 		if tagName == "" {
 			tagName = strings.ToLower(fieldType.Name)
 		}
 
-		queryValue := query.Get(tagName)
+		queryValue := queryParams.Get(tagName)
 		if queryValue == "" {
 			continue
 		}
 
-		if err := setFieldValue(field, queryValue); err != nil {
-			return fmt.Errorf("Field %s: %w", fieldType.Name, err)
+		settingError := setFieldValue(field, queryValue)
+		if settingError != nil {
+			return fmt.Errorf("Field %s: %w", fieldType.Name, settingError)
 		}
 	}
 
 	return nil
 }
 
-func parseHeaders(r *http.Request, v any) error {
-	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
+func parseHeaders(r *http.Request, targetStruct any) error {
+	reflectValue := reflect.ValueOf(targetStruct)
+	if reflectValue.Kind() != reflect.Ptr || reflectValue.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("HeadersScheme must be a pointer to struct")
 	}
 
-	rv = rv.Elem()
-	rt := rv.Type()
+	reflectValue = reflectValue.Elem()
+	reflectType := reflectValue.Type()
 
-	for i := 0; i < rv.NumField(); i++ {
-		field := rv.Field(i)
-		fieldType := rt.Field(i)
+	for fieldIndex := 0; fieldIndex < reflectValue.NumField(); fieldIndex++ {
+		field := reflectValue.Field(fieldIndex)
+		fieldType := reflectType.Field(fieldIndex)
 
 		tagName := fieldType.Tag.Get("header")
 		if tagName == "-" {
@@ -189,51 +190,51 @@ func parseHeaders(r *http.Request, v any) error {
 			continue
 		}
 
-		if err := setFieldValue(field, headerValue); err != nil {
-			return fmt.Errorf("Field %s: %w", fieldType.Name, err)
+		if settingError := setFieldValue(field, headerValue); settingError != nil {
+			return fmt.Errorf("Field %s: %w", fieldType.Name, settingError)
 		}
 	}
 
 	return nil
 }
 
-func setFieldValue(field reflect.Value, value string) error {
+func setFieldValue(field reflect.Value, stringValue string) error {
 	if !field.CanSet() {
 		return fmt.Errorf("Field cannot be set")
 	}
 
 	switch field.Kind() {
 	case reflect.String:
-		field.SetString(value)
+		field.SetString(stringValue)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		intVal, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return fmt.Errorf("Cannot parse as int: %w", err)
+		integerValue, parsingError := strconv.ParseInt(stringValue, 10, 64)
+		if parsingError != nil {
+			return fmt.Errorf("Cannot parse as int: %w", parsingError)
 		}
-		field.SetInt(intVal)
+		field.SetInt(integerValue)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		uintVal, err := strconv.ParseUint(value, 10, 64)
-		if err != nil {
-			return fmt.Errorf("Cannot parse as uint: %w", err)
+		unsignedIntegerValue, parsingError := strconv.ParseUint(stringValue, 10, 64)
+		if parsingError != nil {
+			return fmt.Errorf("Cannot parse as uint: %w", parsingError)
 		}
-		field.SetUint(uintVal)
+		field.SetUint(unsignedIntegerValue)
 	case reflect.Float32, reflect.Float64:
-		floatVal, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return fmt.Errorf("Cannot parse as float: %w", err)
+		floatValue, parsingError := strconv.ParseFloat(stringValue, 64)
+		if parsingError != nil {
+			return fmt.Errorf("Cannot parse as float: %w", parsingError)
 		}
-		field.SetFloat(floatVal)
+		field.SetFloat(floatValue)
 	case reflect.Bool:
-		boolVal, err := strconv.ParseBool(value)
-		if err != nil {
-			return fmt.Errorf("Cannot parse as bool: %w", err)
+		booleanValue, parsingError := strconv.ParseBool(stringValue)
+		if parsingError != nil {
+			return fmt.Errorf("Cannot parse as bool: %w", parsingError)
 		}
-		field.SetBool(boolVal)
+		field.SetBool(booleanValue)
 	case reflect.Ptr:
 		if field.IsNil() {
 			field.Set(reflect.New(field.Type().Elem()))
 		}
-		return setFieldValue(field.Elem(), value)
+		return setFieldValue(field.Elem(), stringValue)
 	default:
 		return fmt.Errorf("Unsupported field type: %s", field.Kind())
 	}

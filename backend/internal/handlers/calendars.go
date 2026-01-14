@@ -18,31 +18,31 @@ type CreateCalendarResponse struct {
 	ID string `json:"id"`
 }
 
-func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
-	var req CreateCalendarRequest
+func (h *Handler) CreateCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
+	var requestBody CreateCalendarRequest
 
-	if err := ParseRequest(r, RequestOptions{Body: &req}); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error())
+	if parsingError := ParseRequest(r, RequestOptions{Body: &requestBody}); parsingError != nil {
+		RespondError(w, http.StatusBadRequest, parsingError.Error())
 		return
 	}
 
-	input := services.CreateCalendarInput{
-		Title:       req.Title,
-		Description: req.Description,
-		Location:    req.Location,
+	serviceInput := services.CreateCalendarInput{
+		Title:       requestBody.Title,
+		Description: requestBody.Description,
+		Location:    requestBody.Location,
 	}
 
-	if req.AcceptResponsesUntil != nil {
-		parsedTime, err := time.Parse(time.RFC3339, *req.AcceptResponsesUntil)
-		if err != nil {
+	if requestBody.AcceptResponsesUntil != nil {
+		parsedTime, timeParsingError := time.Parse(time.RFC3339, *requestBody.AcceptResponsesUntil)
+		if timeParsingError != nil {
 			RespondError(w, http.StatusBadRequest, "Invalid time format for accept_responses_until, expected RFC3339")
 			return
 		}
-		input.AcceptResponsesUntil = &parsedTime
+		serviceInput.AcceptResponsesUntil = &parsedTime
 	}
 
-	calendarID, err := h.CalendarService.CreateCalendar(r.Context(), input)
-	if err != nil {
+	calendarID, creationError := h.CalendarService.CreateCalendar(r.Context(), serviceInput)
+	if creationError != nil {
 		RespondError(w, http.StatusInternalServerError, "Failed to create calendar")
 		return
 	}

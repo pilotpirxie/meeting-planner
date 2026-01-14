@@ -12,30 +12,29 @@ type responseWriter struct {
 	size   int
 }
 
-func (rw *responseWriter) WriteHeader(status int) {
-	rw.status = status
-	rw.ResponseWriter.WriteHeader(status)
+func (w *responseWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
 }
 
-func (rw *responseWriter) Write(b []byte) (int, error) {
-	size, err := rw.ResponseWriter.Write(b)
-	rw.size += size
-	return size, err
+func (w *responseWriter) Write(dataBytes []byte) (int, error) {
+	bytesWritten, writeError := w.ResponseWriter.Write(dataBytes)
+	w.size += bytesWritten
+	return bytesWritten, writeError
 }
 
-func Logging(next http.Handler) http.Handler {
+func Logging(nextHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+		startTime := time.Now()
+		wrappedWriter := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 
-		next.ServeHTTP(rw, r)
-
+		nextHandler.ServeHTTP(wrappedWriter, r)
 		log.Printf("%s %s %d %dB %s",
 			r.Method,
 			r.URL.Path,
-			rw.status,
-			rw.size,
-			time.Since(start),
+			wrappedWriter.status,
+			wrappedWriter.size,
+			time.Since(startTime),
 		)
 	})
 }

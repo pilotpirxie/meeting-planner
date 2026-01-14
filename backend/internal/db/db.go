@@ -14,33 +14,33 @@ type DB struct {
 	Queries *sqlc.Queries
 }
 
-func Init(ctx context.Context, dbURL string) (*DB, error) {
-	if dbURL == "" {
+func Init(ctx context.Context, databaseURL string) (*DB, error) {
+	if databaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is not set; set it in environment or .env")
 	}
 
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse database URL: %w", err)
+	poolConfig, configParsingError := pgxpool.ParseConfig(databaseURL)
+	if configParsingError != nil {
+		return nil, fmt.Errorf("Unable to parse database URL: %w", configParsingError)
 	}
-	config.MaxConns = 5
-	config.MinConns = 5
-	config.MaxConnLifetime = 30 * time.Minute
-	config.MaxConnIdleTime = 5 * time.Minute
-	config.HealthCheckPeriod = 1 * time.Minute
+	poolConfig.MaxConns = 5
+	poolConfig.MinConns = 5
+	poolConfig.MaxConnLifetime = 30 * time.Minute
+	poolConfig.MaxConnIdleTime = 5 * time.Minute
+	poolConfig.HealthCheckPeriod = 1 * time.Minute
 
-	pool, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to create connection pool: %w", err)
+	connectionPool, poolCreationError := pgxpool.NewWithConfig(ctx, poolConfig)
+	if poolCreationError != nil {
+		return nil, fmt.Errorf("Unable to create connection pool: %w", poolCreationError)
 	}
 
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("Unable to connect to database: %w", err)
+	if pingError := connectionPool.Ping(ctx); pingError != nil {
+		return nil, fmt.Errorf("Unable to connect to database: %w", pingError)
 	}
 
 	return &DB{
-		Pool:    pool,
-		Queries: sqlc.New(pool),
+		Pool:    connectionPool,
+		Queries: sqlc.New(connectionPool),
 	}, nil
 }
 

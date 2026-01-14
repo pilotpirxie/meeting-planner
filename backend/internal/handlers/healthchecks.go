@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HealthcheckEndpoint(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, map[string]any{"status": "ok"})
 }
 
-func (h *Handler) Echo(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) EchoEndpoint(w http.ResponseWriter, r *http.Request) {
 	var payloadBody struct {
 		Message string `json:"message" validate:"required,min=1"`
 	}
@@ -27,16 +27,16 @@ func (h *Handler) Echo(w http.ResponseWriter, r *http.Request) {
 		AuthToken string `header:"Authorization" validate:"required"`
 	}
 
-	err := ParseRequest(r, RequestOptions{
+	parsingError := ParseRequest(r, RequestOptions{
 		Body:    &payloadBody,
 		Params:  &payloadParams,
 		Query:   &payloadQuery,
 		Headers: &payloadHeaders,
 	})
 
-	if err != nil {
-		fmt.Printf("Error parsing request: %v\n", err)
-		RespondError(w, http.StatusBadRequest, err.Error())
+	if parsingError != nil {
+		fmt.Printf("Error parsing request: %v\n", parsingError)
+		RespondError(w, http.StatusBadRequest, parsingError.Error())
 		return
 	}
 

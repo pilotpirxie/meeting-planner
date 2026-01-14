@@ -22,72 +22,33 @@ import (
 func main() {
 	_ = godotenv.Load()
 
-	ctx := context.Background()
+	backgroundContext := context.Background()
 
-	dbURL := os.Getenv("DATABASE_URL")
-	db, err := db.Init(ctx, dbURL)
-	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
-	defer db.Close()
-
-	h := handlers.New(db)
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("GET /api/health", h.Healthcheck)
-	mux.HandleFunc("POST /api/echo/{id}", h.Echo)
-
-	mux.HandleFunc("POST /api/calendars", h.CreateCalendar)
-	// mux.HandleFunc("GET /api/calendars/{id}", h.GetCalendar)
-
-	// TODO: Implement polls
-	// mux.HandleFunc("GET /api/polls", handlers.ListPolls)
-	// mux.HandleFunc("POST /api/polls", handlers.CreatePoll)
-	// mux.HandleFunc("GET /api/polls/{id}", handlers.GetPoll)
-	// mux.HandleFunc("POST /api/polls/{id}/vote", handlers.VotePoll)
-
-	// TODO: Implement weather endpoints
-	// mux.HandleFunc("GET /api/weather", handlers.GetWeather)
-	// mux.HandleFunc("GET /api/weather/{location}", handlers.GetWeatherByLocation)
-
-	staticDir := "public"
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		if strings.HasPrefix(r.URL.Path, "/api/") {
-			http.NotFound(w, r)
-			return
-		}
-		requested := path.Clean(r.URL.Path)
-		if requested == "/" {
-			requested = "/index.html"
-		}
-		filePath := path.Join(staticDir, requested)
-		if _, err := os.Stat(filePath); err == nil {
-			http.ServeFile(w, r, filePath)
-			return
-		}
-		indexPath := path.Join(staticDir, "index.html")
-		if _, err := os.Stat(indexPath); err == nil {
-			http.ServeFile(w, r, indexPath)
-			return
-		}
-		http.NotFound(w, r)
-	}))
-
-	handler := middleware.Recovery(middleware.Logging(middleware.CORS(mux)))
-
-	addr := ":8080"
-	port := os.Getenv("PORT")
-	if port != "" {
-		addr = ":" + port
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
 	}
 
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           handler,
+	database, initializationError := db.Init(backgroundContext, databaseURL)
+	if initializationError != nil {
+		log.Fatalf("Failed to initialize database: %v", initializationError)
+	}
+	defer database.Close()
+
+	handlerInstance := handlers.New(database)
+	routeMux := setupRoutes(handlerInstance)
+
+	wrappedHandler := middleware.Recovery(middleware.Logging(middleware.CORS(routeMux)))
+
+	serverAddress := ":8080"
+	portEnvVar := os.Getenv("PORT")
+	if portEnvVar != "" {
+		serverAddress = ":" + portEnvVar
+	}
+
+	httpServer := &http.Server{
+		Addr:              serverAddress,
+		Handler:           wrappedHandler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -95,32 +56,80 @@ func main() {
 	}
 
 	go func() {
-		startupInfo := map[string]any{
+		log.Printf("%s", handlers.ToJSONPretty(map[string]any{
 			"message": "Server is starting",
-			"addr":    srv.Addr,
+			"addr":    httpServer.Addr,
 			"time":    time.Now().Format(time.RFC3339),
 			"mode":    "development",
 			"sdk":     runtime.Version(),
-		}
+		}))
 
-		log.Printf("%s", handlers.ToJSONPretty(startupInfo))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+		if serverError := httpServer.ListenAndServe(); serverError != nil && serverError != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", serverError)
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	quitSignal := make(chan os.Signal, 1)
+	signal.Notify(quitSignal, syscall.SIGINT, syscall.SIGTERM)
+	<-quitSignal
 
 	log.Println("Shutting down server...")
 
-	ctxShutdown, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelShutdown()
 
-	if err := srv.Shutdown(ctxShutdown); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+	if shutdownError := httpServer.Shutdown(shutdownContext); shutdownError != nil {
+		log.Fatalf("Server forced to shutdown: %v", shutdownError)
 	}
 
 	log.Println("Server exited")
+}
+
+func setupRoutes(handlerInstance *handlers.Handler) *http.ServeMux {
+	routeMux := http.NewServeMux()
+
+	routeMux.HandleFunc("GET /api/health", handlerInstance.HealthcheckEndpoint)
+	routeMux.HandleFunc("POST /api/echo/{id}", handlerInstance.EchoEndpoint)
+
+	routeMux.HandleFunc("POST /api/calendars", handlerInstance.CreateCalendarEndpoint)
+	// routeMux.HandleFunc("GET /api/calendars/{id}", handlerInstance.GetCalendar)
+
+	setupStaticFileServer(routeMux)
+
+	return routeMux
+}
+
+func setupStaticFileServer(routeMux *http.ServeMux) {
+	staticDirectory := "public"
+
+	routeMux.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodGet && request.Method != http.MethodHead {
+			http.Error(writer, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		if strings.HasPrefix(request.URL.Path, "/api/") {
+			http.NotFound(writer, request)
+			return
+		}
+
+		requestedPath := path.Clean(request.URL.Path)
+		if requestedPath == "/" {
+			requestedPath = "/index.html"
+		}
+
+		filePath := path.Join(staticDirectory, requestedPath)
+		if _, fileStatError := os.Stat(filePath); fileStatError == nil {
+			http.ServeFile(writer, request, filePath)
+			return
+		}
+
+		indexPath := path.Join(staticDirectory, "index.html")
+		if _, indexStatError := os.Stat(indexPath); indexStatError == nil {
+			http.ServeFile(writer, request, indexPath)
+			return
+		}
+
+		http.NotFound(writer, request)
+	}))
 }

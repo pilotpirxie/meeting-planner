@@ -6,15 +6,15 @@ import (
 	"runtime/debug"
 )
 
-func Recovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func Recovery(nextHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("Panic: %v\n%s", err, debug.Stack())
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			if panicError := recover(); panicError != nil {
+				log.Printf("Panic: %v\n%s", panicError, debug.Stack())
+				http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()
 
-		next.ServeHTTP(w, r)
+		nextHandler.ServeHTTP(writer, request)
 	})
 }

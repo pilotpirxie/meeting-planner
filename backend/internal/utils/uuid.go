@@ -7,27 +7,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func StringToUUID(s string) (pgtype.UUID, error) {
-	parsedUUID, err := uuid.Parse(s)
-	if err != nil {
-		return pgtype.UUID{}, fmt.Errorf("invalid UUID: %w", err)
+func StringToUUID(uuidString string) (pgtype.UUID, error) {
+	parsedUUID, parsingError := uuid.Parse(uuidString)
+	if parsingError != nil {
+		return pgtype.UUID{}, fmt.Errorf("invalid UUID: %w", parsingError)
 	}
 
 	var pgtypeUUID pgtype.UUID
-	if err := pgtypeUUID.Scan(parsedUUID); err != nil {
-		return pgtype.UUID{}, fmt.Errorf("failed to convert UUID: %w", err)
+	if scanError := pgtypeUUID.Scan(parsedUUID); scanError != nil {
+		return pgtype.UUID{}, fmt.Errorf("failed to convert UUID: %w", scanError)
 	}
 
 	return pgtypeUUID, nil
 }
 
-func UUIDToString(u pgtype.UUID) string {
-	if !u.Valid {
+func UUIDToString(pgtypeUUID pgtype.UUID) string {
+	if !pgtypeUUID.Valid {
 		return ""
 	}
 
-	parsedUUID, err := uuid.FromBytes(u.Bytes[:])
-	if err != nil {
+	parsedUUID, conversionError := uuid.FromBytes(pgtypeUUID.Bytes[:])
+	if conversionError != nil {
 		return ""
 	}
 

@@ -27,22 +27,22 @@ type CreateCalendarInput struct {
 }
 
 func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalendarInput) (pgtype.UUID, error) {
-	params := sqlc.CreateCalendarParams{
+	queryParams := sqlc.CreateCalendarParams{
 		Title:       input.Title,
 		Description: input.Description,
 		Location:    input.Location,
 	}
 
 	if input.AcceptResponsesUntil != nil {
-		params.AcceptResponsesUntil = pgtype.Timestamptz{
+		queryParams.AcceptResponsesUntil = pgtype.Timestamptz{
 			Time:  *input.AcceptResponsesUntil,
 			Valid: true,
 		}
 	}
 
-	calendarID, err := s.queries.CreateCalendar(ctx, params)
-	if err != nil {
-		return pgtype.UUID{}, fmt.Errorf("failed to create calendar: %w", err)
+	calendarID, creationError := s.queries.CreateCalendar(ctx, queryParams)
+	if creationError != nil {
+		return pgtype.UUID{}, fmt.Errorf("failed to create calendar: %w", creationError)
 	}
 
 	return calendarID, nil
