@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-func Healthcheck(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, map[string]any{"status": "ok"})
 }
 
-func Echo(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Echo(w http.ResponseWriter, r *http.Request) {
 	var payloadBody struct {
 		Message string `json:"message" validate:"required,min=1"`
 	}
@@ -28,9 +28,9 @@ func Echo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := ParseRequest(r, RequestOptions{
-		Body:   &payloadBody,
-		Params: &payloadParams,
-		Query:  &payloadQuery,
+		Body:    &payloadBody,
+		Params:  &payloadParams,
+		Query:   &payloadQuery,
 		Headers: &payloadHeaders,
 	})
 

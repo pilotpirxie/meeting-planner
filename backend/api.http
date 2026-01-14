@@ -12,3 +12,14 @@ Authorization: Bearer sometoken
 {
   "message": "Hello World!"
 }
+
+### Test Create Calendar
+POST {{baseUrl}}/api/calendars
+Content-Type: {{contentType}}
+
+{
+  "title": "Team Meeting",
+  "description": "Monthly team sync-up",
+  "location": "Conference Room A",
+  "accept_responses_until": "2026-01-01T01:01:01Z"
+}

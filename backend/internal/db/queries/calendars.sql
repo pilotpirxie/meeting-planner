@@ -1,18 +1,15 @@
 -- name: CreateCalendar :one
 INSERT INTO calendars (
-  id,
   title,
   description,
   location,
-  accept_responses_until,
-  created_at,
-  updated_at
+  accept_responses_until
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING *;
+VALUES ($1, $2, $3, $4)
+RETURNING id;
 
 -- name: GetCalendarByID :one
-SELECT id, title, description, location, accept_responses_until, created_at, updated_at
+SELECT *
 FROM calendars
 WHERE id = $1;
 

@@ -11,8 +11,8 @@ import (
 type Calendar struct {
 	ID                   pgtype.UUID        `json:"id"`
 	Title                string             `json:"title"`
-	Description          pgtype.Text        `json:"description"`
-	Location             pgtype.Text        `json:"location"`
+	Description          *string            `json:"description"`
+	Location             *string            `json:"location"`
 	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`

@@ -88,7 +88,7 @@ func (q *Queries) GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendar
 		return nil, err
 	}
 	defer rows.Close()
-	var items []CalendarTimeSlot
+	items := []CalendarTimeSlot{}
 	for rows.Next() {
 		var i CalendarTimeSlot
 		if err := rows.Scan(

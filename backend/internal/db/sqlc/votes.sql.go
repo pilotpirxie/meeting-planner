@@ -85,7 +85,7 @@ func (q *Queries) ListVotesByCalendarID(ctx context.Context, calendarID pgtype.U
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListVotesByCalendarIDRow
+	items := []ListVotesByCalendarIDRow{}
 	for rows.Next() {
 		var i ListVotesByCalendarIDRow
 		if err := rows.Scan(

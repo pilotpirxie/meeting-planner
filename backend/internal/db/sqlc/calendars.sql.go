@@ -13,49 +13,32 @@ import (
 
 const createCalendar = `-- name: CreateCalendar :one
 INSERT INTO calendars (
-  id,
   title,
   description,
   location,
-  accept_responses_until,
-  created_at,
-  updated_at
+  accept_responses_until
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, title, description, location, accept_responses_until, created_at, updated_at
+VALUES ($1, $2, $3, $4)
+RETURNING id
 `
 
 type CreateCalendarParams struct {
-	ID                   pgtype.UUID        `json:"id"`
 	Title                string             `json:"title"`
-	Description          pgtype.Text        `json:"description"`
-	Location             pgtype.Text        `json:"location"`
+	Description          *string            `json:"description"`
+	Location             *string            `json:"location"`
 	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
 }
 
-func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (Calendar, error) {
+func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (pgtype.UUID, error) {
 	row := q.db.QueryRow(ctx, createCalendar,
-		arg.ID,
 		arg.Title,
 		arg.Description,
 		arg.Location,
 		arg.AcceptResponsesUntil,
-		arg.CreatedAt,
-		arg.UpdatedAt,
 	)
-	var i Calendar
-	err := row.Scan(
-		&i.ID,
-		&i.Title,
-		&i.Description,
-		&i.Location,
-		&i.AcceptResponsesUntil,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteCalendarByID = `-- name: DeleteCalendarByID :exec

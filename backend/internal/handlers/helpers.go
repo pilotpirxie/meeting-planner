@@ -112,7 +112,7 @@ func parsePathParams(r *http.Request, v any) error {
 	for i := 0; i < rv.NumField(); i++ {
 		field := rv.Field(i)
 		fieldType := rt.Field(i)
-		
+
 		tagName := fieldType.Tag.Get("param")
 		if tagName == "" {
 			tagName = strings.ToLower(fieldType.Name)

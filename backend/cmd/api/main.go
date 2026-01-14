@@ -23,20 +23,22 @@ func main() {
 	_ = godotenv.Load()
 
 	ctx := context.Background()
-	if err := db.Init(ctx); err != nil {
+
+	dbURL := os.Getenv("DATABASE_URL")
+	db, err := db.Init(ctx, dbURL)
+	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
 
+	h := handlers.New(db)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /api/health", handlers.Healthcheck)
-	mux.HandleFunc("POST /api/echo/{id}", handlers.Echo)
+	mux.HandleFunc("GET /api/health", h.Healthcheck)
+	mux.HandleFunc("POST /api/echo/{id}", h.Echo)
 
-	mux.HandleFunc("GET /api/calendars", handlers.ListCalendars)
-	mux.HandleFunc("POST /api/calendars", handlers.CreateCalendar)
-	mux.HandleFunc("GET /api/calendars/{id}", handlers.GetCalendar)
-	mux.HandleFunc("POST /api/calendars/{id}/vote", handlers.VoteCalendar)
+	mux.HandleFunc("POST /api/calendars", h.CreateCalendar)
+	// mux.HandleFunc("GET /api/calendars/{id}", h.GetCalendar)
 
 	// TODO: Implement polls
 	// mux.HandleFunc("GET /api/polls", handlers.ListPolls)
