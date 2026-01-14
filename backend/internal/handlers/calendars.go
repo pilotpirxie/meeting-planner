@@ -1,56 +1,53 @@
 package handlers
 
 import (
-	"fmt"
-	"meeting-planner/backend/internal/db/sqlc"
+	"meeting-planner/backend/internal/services"
+	"meeting-planner/backend/internal/utils"
 	"net/http"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
-	var payloadBody struct {
-		Title                string  `json:"title"`
-		Description          *string `json:"description,omitempty"`
-		Location             *string `json:"location,omitempty"`
-		AcceptResponsesUntil *string `json:"accept_responses_until,omitempty"`
-	}
+type CreateCalendarRequest struct {
+	Title                string  `json:"title" validate:"required,min=3,max=200"`
+	Description          *string `json:"description,omitempty" validate:"omitempty,max=1000"`
+	Location             *string `json:"location,omitempty" validate:"omitempty,max=500"`
+	AcceptResponsesUntil *string `json:"accept_responses_until,omitempty" validate:"omitempty,rfc3339"`
+}
 
-	err := ParseRequest(r, RequestOptions{
-		Body: &payloadBody,
-	})
-	if err != nil {
+type CreateCalendarResponse struct {
+	ID string `json:"id"`
+}
+
+func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
+	var req CreateCalendarRequest
+
+	if err := ParseRequest(r, RequestOptions{Body: &req}); err != nil {
 		RespondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	params := sqlc.CreateCalendarParams{
-		Title:       payloadBody.Title,
-		Description: payloadBody.Description,
-		Location:    payloadBody.Location,
+	input := services.CreateCalendarInput{
+		Title:       req.Title,
+		Description: req.Description,
+		Location:    req.Location,
 	}
 
-	if payloadBody.AcceptResponsesUntil != nil {
-		parsedTime, err := time.Parse(time.RFC3339, *payloadBody.AcceptResponsesUntil)
+	if req.AcceptResponsesUntil != nil {
+		parsedTime, err := time.Parse(time.RFC3339, *req.AcceptResponsesUntil)
 		if err != nil {
-			RespondError(w, http.StatusBadRequest, "Invalid time format for AcceptResponsesUntil")
+			RespondError(w, http.StatusBadRequest, "Invalid time format for accept_responses_until, expected RFC3339")
 			return
 		}
-
-		params.AcceptResponsesUntil = pgtype.Timestamptz{
-			Time:  parsedTime,
-			Valid: true,
-		}
+		input.AcceptResponsesUntil = &parsedTime
 	}
 
-	calendarID, err := h.DB.Queries.CreateCalendar(r.Context(), params)
+	calendarID, err := h.CalendarService.CreateCalendar(r.Context(), input)
 	if err != nil {
-		RespondError(w, http.StatusInternalServerError, fmt.Errorf("Failed to create calendar: %w", err).Error())
+		RespondError(w, http.StatusInternalServerError, "Failed to create calendar")
 		return
 	}
 
-	RespondJSON(w, http.StatusCreated, map[string]any{
-		"id": calendarID,
+	RespondJSON(w, http.StatusCreated, CreateCalendarResponse{
+		ID: utils.UUIDToString(calendarID),
 	})
 }
