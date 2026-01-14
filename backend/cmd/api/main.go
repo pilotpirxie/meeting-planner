@@ -118,6 +118,12 @@ func setupStaticFileServer(routeMux *http.ServeMux) {
 			requestedPath = "/index.html"
 		}
 
+		requestedPath = strings.TrimPrefix(requestedPath, "/")
+		if strings.Contains(requestedPath, "..") {
+			http.NotFound(writer, request)
+			return
+		}
+
 		filePath := path.Join(staticDirectory, requestedPath)
 		if _, fileStatError := os.Stat(filePath); fileStatError == nil {
 			http.ServeFile(writer, request, filePath)

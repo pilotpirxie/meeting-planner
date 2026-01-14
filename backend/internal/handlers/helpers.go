@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -21,14 +22,6 @@ func RespondJSON(w http.ResponseWriter, status int, data any) {
 
 func RespondError(w http.ResponseWriter, status int, message string) {
 	RespondJSON(w, status, map[string]any{"error": message})
-}
-
-func ParseJSON(r *http.Request, targetValue any) error {
-	if r.Body == nil {
-		return http.ErrMissingFile
-	}
-	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(targetValue)
 }
 
 func ToJSON(value any) string {
@@ -48,6 +41,22 @@ func ToJSONPretty(value any) string {
 }
 
 var validate = validator.New()
+
+func init() {
+	_ = validate.RegisterValidation("rfc3339", func(fieldLevel validator.FieldLevel) bool {
+		if fieldLevel.Field().Kind() != reflect.String {
+			return false
+		}
+
+		value := fieldLevel.Field().String()
+		if value == "" {
+			return true
+		}
+
+		_, parseError := time.Parse(time.RFC3339, value)
+		return parseError == nil
+	})
+}
 
 type RequestOptions struct {
 	Body    any
@@ -155,8 +164,7 @@ func parseQueryParams(r *http.Request, targetStruct any) error {
 			continue
 		}
 
-		settingError := setFieldValue(field, queryValue)
-		if settingError != nil {
+		if settingError := setFieldValue(field, queryValue); settingError != nil {
 			return fmt.Errorf("Field %s: %w", fieldType.Name, settingError)
 		}
 	}
