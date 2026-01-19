@@ -47,3 +47,36 @@ func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalend
 
 	return calendarID, nil
 }
+
+type TimeSlotInput struct {
+	StartDate time.Time
+	EndDate   time.Time
+}
+
+type CreateCalendarTimeSlotsInput struct {
+	CalendarID pgtype.UUID
+	TimeSlots  []TimeSlotInput
+}
+
+func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input CreateCalendarTimeSlotsInput) error {
+	for _, slot := range input.TimeSlots {
+		queryParams := sqlc.CreateCalendarTimeSlotParams{
+			CalendarID: input.CalendarID,
+			StartDate: pgtype.Timestamptz{
+				Time:  slot.StartDate,
+				Valid: true,
+			},
+			EndDate: pgtype.Timestamptz{
+				Time:  slot.EndDate,
+				Valid: true,
+			},
+		}
+
+		_, creationError := s.queries.CreateCalendarTimeSlot(ctx, queryParams)
+		if creationError != nil {
+			return fmt.Errorf("failed to create calendar time slot: %w", creationError)
+		}
+	}
+
+	return nil
+}

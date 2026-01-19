@@ -80,7 +80,8 @@ export default defineConfig([
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_"
         }
-      ]
+      ],
+      "@typescript-eslint/prefer-nullish-coalescing": "off",
     }
   }
 ]);

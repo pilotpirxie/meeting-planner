@@ -10,9 +10,8 @@ export interface Calendar {
 
 export interface TimeSlot {
   id: string;
-  slotDate: string;
-  startTime: string;
-  endTime: string;
+  startDate: string;
+  endDate: string;
   createdAt: string;
   updatedAt: string;
 }

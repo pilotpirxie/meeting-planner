@@ -33,7 +33,7 @@ export const WeekView = ({
         {weekDays.map((dayData) => {
           const isToday = dayjs().isSame(dayData.date, "day");
           const sortedSlots = [...dayData.slots].sort((a, b) =>
-            a.startTime.localeCompare(b.startTime)
+            a.startDate.localeCompare(b.startDate)
           );
 
           const formattedDate = screenSize === "desktop"

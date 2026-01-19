@@ -2,26 +2,21 @@
 SELECT 
   id,
   calendar_id,
-  slot_date,
-  start_time,
-  end_time,
+  start_date,
+  end_date,
   created_at,
   updated_at
 FROM calendar_time_slots
 WHERE calendar_id = $1
-ORDER BY slot_date, start_time;
+ORDER BY start_date, end_date;
 
 -- name: CreateCalendarTimeSlot :one
 INSERT INTO calendar_time_slots (
-  id,
   calendar_id,
-  slot_date,
-  start_time,
-  end_time,
-  created_at,
-  updated_at
+  start_date,
+  end_date
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: DeleteCalendarTimeSlotByID :exec

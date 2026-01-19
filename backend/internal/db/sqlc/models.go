@@ -14,6 +14,7 @@ type Calendar struct {
 	Description          *string            `json:"description"`
 	Location             *string            `json:"location"`
 	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
+	Password             *string            `json:"password"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
 }
@@ -21,9 +22,8 @@ type Calendar struct {
 type CalendarTimeSlot struct {
 	ID         pgtype.UUID        `json:"id"`
 	CalendarID pgtype.UUID        `json:"calendar_id"`
-	SlotDate   pgtype.Date        `json:"slot_date"`
-	StartTime  pgtype.Time        `json:"start_time"`
-	EndTime    pgtype.Time        `json:"end_time"`
+	StartDate  pgtype.Timestamptz `json:"start_date"`
+	EndDate    pgtype.Timestamptz `json:"end_date"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }

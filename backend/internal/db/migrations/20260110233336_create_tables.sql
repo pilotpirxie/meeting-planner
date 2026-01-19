@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS calendars (
   description text,
   location text,
   accept_responses_until timestamptz,
+  password text,
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
@@ -12,9 +13,8 @@ CREATE TABLE IF NOT EXISTS calendars (
 CREATE TABLE IF NOT EXISTS calendar_time_slots (
   id uuid PRIMARY KEY,
   calendar_id uuid REFERENCES calendars(id) ON DELETE CASCADE,
-  slot_date date NOT NULL,
-  start_time time NOT NULL,
-  end_time time NOT NULL,
+  start_date timestamptz NOT NULL,
+  end_date timestamptz NOT NULL,
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );

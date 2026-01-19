@@ -1,14 +1,22 @@
+import { useState } from "react";
 import { Collapse } from "../components/Collapse";
 import { Modal } from "../components/Modal";
 import { QuickSlotGenerator } from "../components/QuickSlotGenerator";
 import { TimeSlotForm } from "../components/TimeSlotForm";
 import { TimeSlotList } from "../components/TimeSlotList";
+import { useCreateCalendarMutation, useCreateCalendarTimeSlotsMutation } from "../data/calendarsApi";
 import { useHangoutForm } from "../hooks/useHangoutForm";
 import { useQuickSlotModal } from "../hooks/useQuickSlotModal";
 import { useTimeSlotModal } from "../hooks/useTimeSlotModal";
 import type { TimeSlot } from "../types";
 
 export const Home = () => {
+  const [title, setTitle] = useState("");
+  const [password, setPassword] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [acceptResponsesUntil, setAcceptResponsesUntil] = useState("");
+
   const {
     timeSlots,
     addTimeSlot,
@@ -44,6 +52,55 @@ export const Home = () => {
     handleOpenEditModal(slot);
   };
 
+  const [createCalendar, { isLoading: _isLoading }] = useCreateCalendarMutation();
+  const [createCalendarTimeSlots, { isLoading: _isCreatingTimeSlots }] = useCreateCalendarTimeSlotsMutation();
+  const handleCreateCalendar = async () => {
+    try {
+      if (password.length > 0 && password.length < 3) {
+        alert("Password must be optional or at least 3 characters long.");
+        return;
+      }
+
+      if (title.length > 0 && (title.length < 3 || title.length > 256)) {
+        alert("Title must be between 3 and 256 characters long.");
+        return;
+      }
+
+      if (description.length > 1024) {
+        alert("Description cannot exceed 1024 characters.");
+        return;
+      }
+
+      if (location.length > 512) {
+        alert("Location cannot exceed 512 characters.");
+        return;
+      }
+
+      if (acceptResponsesUntil && isNaN(Date.parse(acceptResponsesUntil))) {
+        alert("Accept responses until must be a valid date.");
+        return;
+      }
+
+      const calendar = await createCalendar({
+        title: title || "Hangout",
+        description,
+        location,
+        accept_responses_until: acceptResponsesUntil,
+        password
+      }).unwrap();
+
+      await createCalendarTimeSlots({
+        calendar_id: calendar.id,
+        time_slots: timeSlots.map(slot => ({
+          start_date: slot.startDate,
+          end_date: slot.endDate,
+        })),
+      }).unwrap();
+    } catch (err) {
+      console.error("Failed to create calendar:", err);
+    }
+  };
+
   return (
     <div className="bg-success vh-100 overflow-auto">
       <div className="container">
@@ -59,6 +116,10 @@ export const Home = () => {
                   type="text"
                   className="form-control"
                   placeholder="Title of the hangout or activity"
+                  value={title}
+                  minLength={3}
+                  maxLength={256}
+                  onChange={(e) => { setTitle(e.target.value); }}
                 />
               </div>
 
@@ -125,7 +186,9 @@ export const Home = () => {
               </Modal>
 
               <div className="mt-3">
-                <button className="btn btn-primary w-100">
+                <button
+                  className="btn btn-primary w-100"
+                  onClick={() => { void handleCreateCalendar(); }}>
                   Create a new hangout
                 </button>
               </div>
@@ -172,6 +235,10 @@ export const Home = () => {
                       type="text"
                       className="form-control"
                       placeholder="Password required to join"
+                      value={password}
+                      minLength={3}
+                      maxLength={128}
+                      onChange={(e) => { setPassword(e.target.value); }}
                     />
                   </div>
 
@@ -182,6 +249,9 @@ export const Home = () => {
                       type="text"
                       className="form-control"
                       placeholder="Description"
+                      value={description}
+                      maxLength={1024}
+                      onChange={(e) => { setDescription(e.target.value); }}
                     />
                   </div>
 
@@ -192,6 +262,9 @@ export const Home = () => {
                       type="text"
                       className="form-control"
                       placeholder="Location"
+                      value={location}
+                      maxLength={512}
+                      onChange={(e) => { setLocation(e.target.value); }}
                     />
                   </div>
 
@@ -202,6 +275,8 @@ export const Home = () => {
                       type="date"
                       className="form-control"
                       placeholder="End date"
+                      value={acceptResponsesUntil}
+                      onChange={(e) => { setAcceptResponsesUntil(e.target.value); }}
                     />
                   </div>
                 </Collapse>

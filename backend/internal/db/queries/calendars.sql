@@ -3,9 +3,10 @@ INSERT INTO calendars (
   title,
   description,
   location,
-  accept_responses_until
+  accept_responses_until,
+  password
 )
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id;
 
 -- name: GetCalendarByID :one

@@ -32,9 +32,10 @@ export const generateTimeSlots = ({
       const dateStr = date.format("YYYY-MM-DD");
       generated.push({
         id: crypto.randomUUID(),
-        slotDate: dateStr,
-        startTime: "00:00",
-        endTime: "23:59",
+        startDate: `${dateStr}T00:00:00`,
+        endDate: `${dateStr}T23:59:59`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     }
     return generated;
@@ -62,11 +63,15 @@ export const generateTimeSlots = ({
       const startTime = `${String(startHour).padStart(2, "0")}:${String(startMin).padStart(2, "0")}`;
       const endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
+      const slotStart = `${dateStr}T${startTime}:00`;
+      const slotEnd = `${dateStr}T${endTime}:00`;
+
       generated.push({
         id: crypto.randomUUID(),
-        slotDate: dateStr,
-        startTime,
-        endTime,
+        startDate: slotStart,
+        endDate: slotEnd,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       currentMinutes += intervalHours * 60;

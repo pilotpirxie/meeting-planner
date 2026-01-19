@@ -13,45 +13,28 @@ import (
 
 const createCalendarTimeSlot = `-- name: CreateCalendarTimeSlot :one
 INSERT INTO calendar_time_slots (
-  id,
   calendar_id,
-  slot_date,
-  start_time,
-  end_time,
-  created_at,
-  updated_at
+  start_date,
+  end_date
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, calendar_id, slot_date, start_time, end_time, created_at, updated_at
+VALUES ($1, $2, $3)
+RETURNING id, calendar_id, start_date, end_date, created_at, updated_at
 `
 
 type CreateCalendarTimeSlotParams struct {
-	ID         pgtype.UUID        `json:"id"`
 	CalendarID pgtype.UUID        `json:"calendar_id"`
-	SlotDate   pgtype.Date        `json:"slot_date"`
-	StartTime  pgtype.Time        `json:"start_time"`
-	EndTime    pgtype.Time        `json:"end_time"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	StartDate  pgtype.Timestamptz `json:"start_date"`
+	EndDate    pgtype.Timestamptz `json:"end_date"`
 }
 
 func (q *Queries) CreateCalendarTimeSlot(ctx context.Context, arg CreateCalendarTimeSlotParams) (CalendarTimeSlot, error) {
-	row := q.db.QueryRow(ctx, createCalendarTimeSlot,
-		arg.ID,
-		arg.CalendarID,
-		arg.SlotDate,
-		arg.StartTime,
-		arg.EndTime,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-	)
+	row := q.db.QueryRow(ctx, createCalendarTimeSlot, arg.CalendarID, arg.StartDate, arg.EndDate)
 	var i CalendarTimeSlot
 	err := row.Scan(
 		&i.ID,
 		&i.CalendarID,
-		&i.SlotDate,
-		&i.StartTime,
-		&i.EndTime,
+		&i.StartDate,
+		&i.EndDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -72,14 +55,13 @@ const getCalendarTimeSlotsByCalendarID = `-- name: GetCalendarTimeSlotsByCalenda
 SELECT 
   id,
   calendar_id,
-  slot_date,
-  start_time,
-  end_time,
+  start_date,
+  end_date,
   created_at,
   updated_at
 FROM calendar_time_slots
 WHERE calendar_id = $1
-ORDER BY slot_date, start_time
+ORDER BY start_date, end_date
 `
 
 func (q *Queries) GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]CalendarTimeSlot, error) {
@@ -94,9 +76,8 @@ func (q *Queries) GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendar
 		if err := rows.Scan(
 			&i.ID,
 			&i.CalendarID,
-			&i.SlotDate,
-			&i.StartTime,
-			&i.EndTime,
+			&i.StartDate,
+			&i.EndDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

@@ -80,7 +80,7 @@ export const CalendarHeader = ({
         : "";
 
   const handleNavigate = viewMode === "week" ? onWeekChange : onMonthChange;
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+
   const showNavigation = (viewMode === "week" && currentWeek && onWeekChange) ||
     (viewMode === "month" && currentMonth && onMonthChange);
 

@@ -18,10 +18,12 @@ export const useTimeSlotModal = () => {
 
   const handleOpenEditModal = (slot: TimeSlot) => {
     setEditingId(slot.id);
+    const startDate = new Date(slot.startDate);
+    const endDate = new Date(slot.endDate);
     setModalData({
-      date: slot.slotDate,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
+      date: startDate.toISOString().split("T")[0],
+      startTime: startDate.toTimeString().split(" ")[0].substring(0, 5),
+      endTime: endDate.toTimeString().split(" ")[0].substring(0, 5),
     });
     setIsModalOpen(true);
   };
@@ -36,20 +38,25 @@ export const useTimeSlotModal = () => {
     onAdd: (slot: TimeSlot) => void,
     onUpdate: (id: string, slot: TimeSlot) => void
   ) => {
+    const startDate = `${modalData.date}T${modalData.startTime}:00`;
+    const endDate = `${modalData.date}T${modalData.endTime}:00`;
+
     if (editingId) {
       const updatedSlot: TimeSlot = {
         id: editingId,
-        slotDate: modalData.date,
-        startTime: modalData.startTime,
-        endTime: modalData.endTime,
+        startDate,
+        endDate,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       onUpdate(editingId, updatedSlot);
     } else {
       const newSlot: TimeSlot = {
         id: crypto.randomUUID(),
-        slotDate: modalData.date,
-        startTime: modalData.startTime,
-        endTime: modalData.endTime,
+        startDate,
+        endDate,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       onAdd(newSlot);
     }

@@ -92,6 +92,7 @@ func setupRoutes(handlerInstance *handlers.Handler) *http.ServeMux {
 	routeMux.HandleFunc("POST /api/echo/{id}", handlerInstance.EchoEndpoint)
 
 	routeMux.HandleFunc("POST /api/calendars", handlerInstance.CreateCalendarEndpoint)
+	routeMux.HandleFunc("POST /api/calendars/{calendar_id}/time-slots", handlerInstance.CreateCalendarTimeSlotsEndpoint)
 	// routeMux.HandleFunc("GET /api/calendars/{id}", handlerInstance.GetCalendar)
 
 	setupStaticFileServer(routeMux)

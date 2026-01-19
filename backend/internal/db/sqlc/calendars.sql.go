@@ -16,9 +16,10 @@ INSERT INTO calendars (
   title,
   description,
   location,
-  accept_responses_until
+  accept_responses_until,
+  password
 )
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id
 `
 
@@ -27,6 +28,7 @@ type CreateCalendarParams struct {
 	Description          *string            `json:"description"`
 	Location             *string            `json:"location"`
 	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
+	Password             *string            `json:"password"`
 }
 
 func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (pgtype.UUID, error) {
@@ -35,6 +37,7 @@ func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) 
 		arg.Description,
 		arg.Location,
 		arg.AcceptResponsesUntil,
+		arg.Password,
 	)
 	var id pgtype.UUID
 	err := row.Scan(&id)
@@ -52,7 +55,7 @@ func (q *Queries) DeleteCalendarByID(ctx context.Context, id pgtype.UUID) error 
 }
 
 const getCalendarByID = `-- name: GetCalendarByID :one
-SELECT id, title, description, location, accept_responses_until, created_at, updated_at
+SELECT id, title, description, location, accept_responses_until, password, created_at, updated_at
 FROM calendars
 WHERE id = $1
 `
@@ -66,6 +69,7 @@ func (q *Queries) GetCalendarByID(ctx context.Context, id pgtype.UUID) (Calendar
 		&i.Description,
 		&i.Location,
 		&i.AcceptResponsesUntil,
+		&i.Password,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

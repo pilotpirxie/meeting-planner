@@ -26,7 +26,7 @@ export const DaySlotsModal = ({
     : "";
 
   const sortedSlots = [...slots].sort((a, b) =>
-    a.startTime.localeCompare(b.startTime)
+    a.startDate.localeCompare(b.startDate)
   );
 
   return <>
@@ -61,7 +61,7 @@ export const DaySlotsModal = ({
                     onClose();
                   }}>
                   <div className="fw-bold">
-                    {slot.startTime} - {slot.endTime}
+                    {dayjs(slot.startDate).format("h:mm A")} - {dayjs(slot.endDate).format("h:mm A")}
                   </div>
                 </button>
               ))}

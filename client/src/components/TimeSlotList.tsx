@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { TimeSlot } from "../types";
 
 export const TimeSlotList = ({
@@ -14,9 +15,7 @@ export const TimeSlotList = ({
   }
 
   const sortedSlots = [...timeSlots].sort((a, b) => {
-    const dateTimeA = `${a.slotDate}T${a.startTime}`;
-    const dateTimeB = `${b.slotDate}T${b.startTime}`;
-    return dateTimeA.localeCompare(dateTimeB);
+    return a.startDate.localeCompare(b.startDate);
   });
 
   return (
@@ -27,7 +26,7 @@ export const TimeSlotList = ({
           className="card card-body mt-2">
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              {slot.slotDate} from {slot.startTime} to {slot.endTime}
+              {dayjs(slot.startDate).format("YYYY-MM-DD HH:mm")} to {dayjs(slot.endDate).format("YYYY-MM-DD HH:mm")}
             </div>
             <div className="d-flex gap-2">
               <button

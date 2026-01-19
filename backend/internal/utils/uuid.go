@@ -14,9 +14,8 @@ func StringToUUID(uuidString string) (pgtype.UUID, error) {
 	}
 
 	var pgtypeUUID pgtype.UUID
-	if scanError := pgtypeUUID.Scan(parsedUUID); scanError != nil {
-		return pgtype.UUID{}, fmt.Errorf("failed to convert UUID: %w", scanError)
-	}
+	pgtypeUUID.Bytes = [16]byte(parsedUUID)
+	pgtypeUUID.Valid = true
 
 	return pgtypeUUID, nil
 }
